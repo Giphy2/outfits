@@ -13,7 +13,7 @@ require_once __DIR__ . '/includes/header.php';
         <div style="font-size: 3rem; margin-bottom: 16px;">🛍️</div>
         <h2 style="margin-bottom: 12px;">Your Cart is Empty</h2>
         <p style="color: var(--text-secondary); margin-bottom: 24px;">Explore our catalog and pick something fresh.</p>
-        <a href="index.php" class="btn btn-primary">Browse Catalogue</a>
+        <a href="collection.php" class="btn btn-primary">Browse Collection</a>
     </div>
 
     <div id="cart-content-view" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">

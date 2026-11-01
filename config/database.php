@@ -16,7 +16,6 @@ function getDatabaseConnection() {
 
     // Try MySQL first
     try {
-        // Connect to server first without dbname to ensure db exists
         $serverDsn = "mysql:host={$dbHost};port={$dbPort};charset=utf8mb4";
         $options = [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -130,6 +129,59 @@ function initDatabaseTables(PDO $pdo, string $driver) {
                 email TEXT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
+
+            -- Model 2: Lipa Mdogo Mdogo Tables
+            CREATE TABLE IF NOT EXISTS customers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                phone_number TEXT NOT NULL UNIQUE,
+                full_name TEXT NOT NULL,
+                id_number TEXT NULL,
+                email TEXT NULL,
+                delivery_address TEXT NULL,
+                city TEXT DEFAULT 'Nairobi',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS installment_accounts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_number TEXT NOT NULL UNIQUE,
+                customer_id INTEGER NOT NULL,
+                product_id INTEGER NOT NULL,
+                total_amount NUMERIC NOT NULL,
+                deposit_required NUMERIC DEFAULT 0.00,
+                deposit_paid INTEGER DEFAULT 0,
+                amount_paid NUMERIC DEFAULT 0.00,
+                balance_remaining NUMERIC NOT NULL,
+                status TEXT DEFAULT 'active',
+                delivery_status TEXT DEFAULT 'locked',
+                target_completion_date DATE NULL,
+                notes TEXT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+                FOREIGN KEY (product_id) REFERENCES products(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS installment_payments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                installment_account_id INTEGER NOT NULL,
+                payment_method TEXT DEFAULT 'mpesa_paybill',
+                payment_reference TEXT NULL,
+                amount NUMERIC NOT NULL,
+                phone_number TEXT NULL,
+                notes TEXT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (installment_account_id) REFERENCES installment_accounts(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS otp_verifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                phone_number TEXT NOT NULL,
+                otp_code TEXT NOT NULL,
+                expires_at DATETIME NOT NULL,
+                is_used INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
         ");
 
         // Seed products if table is empty
@@ -155,6 +207,35 @@ function initDatabaseTables(PDO $pdo, string $driver) {
             $stmt = $pdo->prepare("INSERT INTO admins (username, password_hash, full_name, email) VALUES (?, ?, ?, ?)");
             $stmt->execute(['admin', password_hash('admin123', PASSWORD_BCRYPT), 'Store Administrator', 'admin@outfit.local']);
         }
+
+        // Seed sample Lipa Mdogo Mdogo customer and installment account if empty
+        $customerCount = $pdo->query("SELECT COUNT(*) FROM customers")->fetchColumn();
+        if ($customerCount == 0) {
+            $custStmt = $pdo->prepare("INSERT INTO customers (phone_number, full_name, id_number, email, delivery_address, city) VALUES (?, ?, ?, ?, ?, ?)");
+            $custStmt->execute(['0712345678', 'John Kamau', '34567890', 'john.kamau@example.com', 'Kilimani, Wood Avenue', 'Nairobi']);
+            $customerId = $pdo->lastInsertId();
+
+            $instStmt = $pdo->prepare("INSERT INTO installment_accounts (account_number, customer_id, product_id, total_amount, deposit_required, deposit_paid, amount_paid, balance_remaining, status, delivery_status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $instStmt->execute([
+                'LMM-84920',
+                $customerId,
+                2, // Relaxed Fit Denim Jacket
+                4500.00,
+                1000.00,
+                1,
+                2500.00,
+                2000.00,
+                'active',
+                'locked',
+                'Registered by Admin with 500/week payment schedule'
+            ]);
+            $accountId = $pdo->lastInsertId();
+
+            // Seed sample installment payments
+            $payStmt = $pdo->prepare("INSERT INTO installment_payments (installment_account_id, payment_method, payment_reference, amount, phone_number, notes) VALUES (?, ?, ?, ?, ?, ?)");
+            $payStmt->execute([$accountId, 'mpesa_paybill', 'MP-DEP10001', 1000.00, '0712345678', 'Initial Deposit']);
+            $payStmt->execute([$accountId, 'mpesa_paybill', 'MP-INS20002', 1500.00, '0712345678', 'Week 1 Installment']);
+        }
     } else {
         // MySQL schema
         $schemaSql = file_get_contents(__DIR__ . '/../database/schema.sql');
@@ -163,4 +244,3 @@ function initDatabaseTables(PDO $pdo, string $driver) {
         }
     }
 }
-

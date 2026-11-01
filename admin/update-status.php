@@ -2,6 +2,14 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/auth.php';
+
+// Enforce admin authentication
+if (!isAdminAuthenticated()) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized: Administrator authentication required.']);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request']);
@@ -31,4 +39,3 @@ if ($success) {
 } else {
     echo json_encode(['success' => false, 'message' => 'Failed to update order']);
 }
-

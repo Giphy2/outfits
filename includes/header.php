@@ -25,9 +25,15 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </a>
 
         <nav class="nav-links">
-            <a href="index.php" class="nav-link <?= $currentPage === 'index.php' ? 'active' : '' ?>">Shop</a>
+            <a href="index.php" class="nav-link <?= $currentPage === 'index.php' ? 'active' : '' ?>">Home</a>
+            <a href="collection.php" class="nav-link <?= $currentPage === 'collection.php' ? 'active' : '' ?>" style="color: #60a5fa; font-weight: 600;">
+                Collection
+            </a>
             <a href="track-order.php" class="nav-link <?= $currentPage === 'track-order.php' ? 'active' : '' ?>">Track Order</a>
-            <a href="admin/dashboard.php" class="nav-link" style="color: #60a5fa;">Admin</a>
+            <a href="lipa-mdogo-mdogo.php" class="nav-link <?= $currentPage === 'lipa-mdogo-mdogo.php' ? 'active' : '' ?>" style="color: #a78bfa; font-weight: 600;">
+                📱 Lipa Mdogo Mdogo
+            </a>
+            <a href="admin/dashboard.php" class="nav-link" style="color: #e11d48;">Admin</a>
             <a href="cart.php" class="cart-btn">
                 <span>🛒 Cart</span>
                 <span class="cart-count" style="display: none;">0</span>
@@ -35,4 +41,3 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </nav>
     </div>
 </header>
-

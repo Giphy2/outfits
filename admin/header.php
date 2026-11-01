@@ -1,8 +1,13 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/auth.php';
+
+// Enforce admin authentication across all pages using this header
+requireAdminAuth();
 
 $currentAdminPage = basename($_SERVER['PHP_SELF']);
+$currentAdmin = getCurrentAdmin();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,8 +50,21 @@ $currentAdminPage = basename($_SERVER['PHP_SELF']);
         <nav class="nav-links">
             <a href="dashboard.php" class="nav-link <?= $currentAdminPage === 'dashboard.php' ? 'active' : '' ?>">Dashboard</a>
             <a href="orders.php" class="nav-link <?= $currentAdminPage === 'orders.php' ? 'active' : '' ?>">Orders</a>
-            <a href="../index.php" class="nav-link" target="_blank" style="color: #10b981;">↗ Customer Store</a>
+            <a href="products.php" class="nav-link <?= $currentAdminPage === 'products.php' ? 'active' : '' ?>">Products</a>
+            <a href="lipa-mdogo.php" class="nav-link <?= $currentAdminPage === 'lipa-mdogo.php' ? 'active' : '' ?>" style="color: #60a5fa; font-weight: 600;">
+                📱 Lipa Mdogo Mdogo
+            </a>
+            <a href="../index.php" class="nav-link" target="_blank" style="color: #10b981;">↗ Store</a>
+            
+            <!-- Admin Profile & Logout -->
+            <div style="display: flex; align-items: center; gap: 10px; margin-left: 10px; padding-left: 14px; border-left: 1px solid var(--border);">
+                <span style="font-size: 0.85rem; color: #fff; display: flex; align-items: center; gap: 6px;">
+                    <span>🛡️</span> <strong><?= htmlspecialchars($currentAdmin['username']) ?></strong>
+                </span>
+                <a href="logout.php" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.78rem; color: #ef4444; border-color: rgba(239,68,68,0.4);">
+                    Logout
+                </a>
+            </div>
         </nav>
     </div>
 </header>
-

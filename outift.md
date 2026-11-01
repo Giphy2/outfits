@@ -183,3 +183,90 @@ That way, we can test the business logic without risking real transactions.
 I suggest we build this as a real working prototype, not just a collection of static HTML pages.
 Option B — Full platform prototype: E-commerce website, customer tracking portal, admin dashboard, payment simulation and a backend designed to support multiple businesses in the future.
 
+introducing a second business model into the system: Lipa Mdogo Mdogo (installment payments).
+
+Instead of customers only paying for products in full at checkout, they can register for a product, pay in smaller amounts over time, and use their phone number to access their account and monitor their payment progress.
+
+
+Pay in full: Customer orders a product, receives a unique code, pays the full amount and tracks the order.
+
+Lipa Mdogo Mdogo: Customer is registered by an administrator using their phone number, selects or is assigned a product, makes installments and checks their account using phone-number verification.
+
+The most important distinction is that the order code identifies a purchase, while the phone number identifies a customer account.
+
+
+customer experience
+Two ways to purchase
+Option A: Pay in full
+One-time payment
+Browse products.
+Add product to cart.
+Checkout and generate order code.
+Pay full amount.
+Track order using the code.
+
+Option B: Lipa Mdogo Mdogo
+Installments
+Administrator registers customer's phone number.
+Customer is assigned or selects an eligible product.
+Installment account is created.
+Customer pays in small amounts.
+Customer verifies their phone number using an OTP.
+Customer views balance, payment history and progress.
+
+Customer checks their account using their phone number
+This is where your idea becomes particularly useful.
+The customer visits the website and selects Check My Lipa Mdogo Mdogo Account
+
+The actual process:
+
+Customer enters their registered phone number.
+PHP checks whether that number exists in the customer database.
+System generates a one-time verification code.
+Code is sent to the customer's phone via SMS.
+Customer enters the code.
+PHP verifies the code.
+Customer is granted access to their installment account.
+I strongly recommend that OTPs expire after a few minutes, can only be used once, and have rate limits to prevent abuse.
+
+The customer should also be able to:
+Make another installment payment from their account.
+View all previous payments.
+Download or receive a payment statement.
+See the remaining balance or make purchase using their current balance.
+
+View whether their product is ready for collection or delivery.
+
+
+Additional database tables
+We will need to expand our original MySQL database.
+
+Table Purpose
+
+customers Registered customer information
+
+installment_accounts Each customer's installment agreement
+
+installment_payments Individual installment allocations
+
+payment_transactions Actual payment attempts and confirmations
+
+payment_references Generated payment codes 
+otp_verifications Temporary phone verification records
+
+installment_schedules Expected payment dates and amounts
+
+account_status_history Changes to account status
+
+Administrator dashboard
+Management functions
+
+Register customer phone numbers.
+Create installment accounts.
+Assign products to customers.
+Set deposits and installment schedules.
+View customer payment histories.
+View outstanding balances.
+Suspend or close accounts with appropriate audit records.
+Manage refunds and payment disputes.
+Export financial reports.

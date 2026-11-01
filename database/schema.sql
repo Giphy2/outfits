@@ -100,3 +100,64 @@ INSERT INTO admins (username, password_hash, full_name, email) VALUES
 ('admin', '$2y$10$wB4b7v3Xb2JgPZ2m6L/JRejVbW/kLwQxOQ9s3w0H0y8a4A9R1vJre', 'Store Administrator', 'admin@outfit.local')
 ON DUPLICATE KEY UPDATE username=username;
 
+
+-- =========================================================
+-- Business Model 2: Lipa Mdogo Mdogo (Installment Accounts)
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS customers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    phone_number VARCHAR(30) NOT NULL UNIQUE,
+    full_name VARCHAR(120) NOT NULL,
+    id_number VARCHAR(40) NULL,
+    email VARCHAR(120) NULL,
+    delivery_address TEXT NULL,
+    city VARCHAR(60) DEFAULT 'Nairobi',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_cust_phone (phone_number)
+);
+
+CREATE TABLE IF NOT EXISTS installment_accounts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    account_number VARCHAR(30) NOT NULL UNIQUE,
+    customer_id INT NOT NULL,
+    product_id INT NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    deposit_required DECIMAL(10,2) DEFAULT 0.00,
+    deposit_paid TINYINT(1) DEFAULT 0,
+    amount_paid DECIMAL(10,2) DEFAULT 0.00,
+    balance_remaining DECIMAL(10,2) NOT NULL,
+    status ENUM('active', 'completed', 'defaulted', 'suspended') DEFAULT 'active',
+    delivery_status ENUM('locked', 'ready_for_collection', 'delivered') DEFAULT 'locked',
+    target_completion_date DATE NULL,
+    notes TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    INDEX idx_lmm_account (account_number),
+    INDEX idx_lmm_status (status)
+);
+
+CREATE TABLE IF NOT EXISTS installment_payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    installment_account_id INT NOT NULL,
+    payment_method VARCHAR(50) DEFAULT 'mpesa_paybill',
+    payment_reference VARCHAR(100) NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    phone_number VARCHAR(30) NULL,
+    notes TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (installment_account_id) REFERENCES installment_accounts(id) ON DELETE CASCADE,
+    INDEX idx_inst_ref (payment_reference)
+);
+
+CREATE TABLE IF NOT EXISTS otp_verifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    phone_number VARCHAR(30) NOT NULL,
+    otp_code VARCHAR(10) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    is_used TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_otp_phone (phone_number)
+);

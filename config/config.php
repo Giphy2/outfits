@@ -28,6 +28,9 @@ define('BANK_NAME', 'Equity Bank');
 define('BANK_ACCOUNT_NAME', 'Outfit Fashion Ltd');
 define('BANK_ACCOUNT_NUMBER', '0123456789012');
 
+// Security & Webhook Token
+define('WEBHOOK_SECRET_KEY', 'outfit_secure_webhook_token_2026');
+
 // Database Configuration
 define('DB_HOST', 'localhost');
 define('DB_PORT', '3306');
@@ -36,15 +39,17 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 
 // Configure local session directory to avoid permission issues
-$sessionDir = __DIR__ . '/../storage/sessions';
-if (!is_dir($sessionDir)) {
-    mkdir($sessionDir, 0777, true);
-}
-if (is_dir($sessionDir) && is_writable($sessionDir)) {
-    session_save_path($sessionDir);
-}
+if (session_status() === PHP_SESSION_NONE) {
+    $sessionDir = __DIR__ . '/../storage/sessions';
+    if (!is_dir($sessionDir)) {
+        mkdir($sessionDir, 0777, true);
+    }
+    if (is_dir($sessionDir) && is_writable($sessionDir)) {
+        session_save_path($sessionDir);
+    }
 
-// Session start if not already started and in web environment
-if (session_status() === PHP_SESSION_NONE && php_sapi_name() !== 'cli') {
-    session_start();
+    // Session start if not already started and in web environment
+    if (php_sapi_name() !== 'cli') {
+        session_start();
+    }
 }

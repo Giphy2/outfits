@@ -3,7 +3,24 @@ define('PAGE_TITLE', 'Track Your Order');
 require_once __DIR__ . '/includes/header.php';
 
 $code = strtoupper(trim($_GET['code'] ?? ''));
+$verifyPhone = trim($_GET['verify_phone'] ?? '');
 $order = $code ? getOrderByCode($code) : null;
+
+// Privacy verification: Check if caller verified their phone or is logged-in admin
+$isAdmin = !empty($_SESSION['admin_logged_in']);
+$isOwnerVerified = false;
+
+if ($order) {
+    if ($isAdmin) {
+        $isOwnerVerified = true;
+    } elseif ($verifyPhone !== '') {
+        $normInput = normalizePhoneNumber($verifyPhone);
+        $normOrderPhone = normalizePhoneNumber($order['customer_phone']);
+        if ($normInput === $normOrderPhone || substr($normOrderPhone, -4) === $verifyPhone) {
+            $isOwnerVerified = true;
+        }
+    }
+}
 ?>
 
 <div class="container" style="padding-top: 40px; padding-bottom: 80px;">
@@ -14,6 +31,9 @@ $order = $code ? getOrderByCode($code) : null;
 
         <form method="GET" action="track-order.php" style="display: flex; gap: 10px;">
             <input type="text" name="code" value="<?= htmlspecialchars($code) ?>" class="form-control" placeholder="Enter Order Code (e.g. OFT-8429)" style="font-size: 1.1rem; text-transform: uppercase; font-family: monospace;" required>
+            <?php if ($verifyPhone): ?>
+                <input type="hidden" name="verify_phone" value="<?= htmlspecialchars($verifyPhone) ?>">
+            <?php endif; ?>
             <button type="submit" class="btn btn-primary" style="padding: 12px 24px;">
                 🔍 Track
             </button>
@@ -135,24 +155,60 @@ $order = $code ? getOrderByCode($code) : null;
                 </div>
             </div>
 
-            <!-- Right: Order Summary & Delivery Address -->
+            <!-- Right: Order Summary & Delivery Address with Privacy Guard -->
             <div>
                 <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; position: sticky; top: 90px;">
-                    <h3 style="font-size: 1.15rem; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-                        Delivery Details
-                    </h3>
-
-                    <div style="margin-bottom: 16px; font-size: 0.9rem;">
-                        <p style="color: var(--text-secondary); margin-bottom: 2px;">Recipient:</p>
-                        <p style="font-weight: 600;"><?= htmlspecialchars($order['customer_name']) ?></p>
-                        <p style="color: var(--text-secondary);"><?= htmlspecialchars($order['customer_phone']) ?></p>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 16px;">
+                        <h3 style="font-size: 1.15rem;">Delivery Details</h3>
+                        <?php if ($isOwnerVerified): ?>
+                            <span class="badge badge-success" style="font-size: 0.72rem;">✓ Verified Owner</span>
+                        <?php else: ?>
+                            <span class="badge badge-muted" style="font-size: 0.72rem;">🔒 Masked</span>
+                        <?php endif; ?>
                     </div>
 
-                    <div style="margin-bottom: 16px; font-size: 0.9rem;">
-                        <p style="color: var(--text-secondary); margin-bottom: 2px;">Destination:</p>
-                        <p><?= htmlspecialchars($order['delivery_address']) ?>, <?= htmlspecialchars($order['city']) ?></p>
-                    </div>
+                    <?php if ($isOwnerVerified): ?>
+                        <!-- Full Unmasked Recipient Details -->
+                        <div style="margin-bottom: 16px; font-size: 0.9rem;">
+                            <p style="color: var(--text-secondary); margin-bottom: 2px;">Recipient:</p>
+                            <p style="font-weight: 600;"><?= htmlspecialchars($order['customer_name']) ?></p>
+                            <p style="color: var(--text-secondary);"><?= htmlspecialchars($order['customer_phone']) ?></p>
+                        </div>
 
+                        <div style="margin-bottom: 16px; font-size: 0.9rem;">
+                            <p style="color: var(--text-secondary); margin-bottom: 2px;">Destination:</p>
+                            <p><?= htmlspecialchars($order['delivery_address']) ?>, <?= htmlspecialchars($order['city']) ?></p>
+                        </div>
+                    <?php else: ?>
+                        <!-- Masked Details to Protect Customer Privacy -->
+                        <div style="margin-bottom: 16px; font-size: 0.9rem;">
+                            <p style="color: var(--text-secondary); margin-bottom: 2px;">Recipient:</p>
+                            <p style="font-weight: 600;"><?= htmlspecialchars(maskName($order['customer_name'])) ?></p>
+                            <p style="color: var(--text-secondary); font-family: monospace;"><?= htmlspecialchars(maskPhoneNumber($order['customer_phone'])) ?></p>
+                        </div>
+
+                        <div style="margin-bottom: 16px; font-size: 0.9rem;">
+                            <p style="color: var(--text-secondary); margin-bottom: 2px;">Destination Area:</p>
+                            <p><?= htmlspecialchars(maskAddress($order['delivery_address'])) ?>, <?= htmlspecialchars($order['city']) ?></p>
+                        </div>
+
+                        <!-- Verification Unlock Box -->
+                        <form method="GET" action="track-order.php" style="background: var(--bg-secondary); border: 1px dashed var(--border); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                            <input type="hidden" name="code" value="<?= htmlspecialchars($order['order_code']) ?>">
+                            <label style="font-size: 0.78rem; color: var(--text-secondary); display: block; margin-bottom: 6px;">
+                                🔐 Enter Phone (or last 4 digits) to unmask:
+                            </label>
+                            <div style="display: flex; gap: 6px;">
+                                <input type="text" name="verify_phone" placeholder="e.g. 0712345678 or 5678" class="form-control" style="font-size: 0.85rem; padding: 6px 10px;" required>
+                                <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; white-space: nowrap;">
+                                    Verify
+                                </button>
+                            </div>
+                        </form>
+                    <?php endif; ?>
+
+                    <!-- Ordered Items -->
                     <h4 style="font-size: 1rem; margin-top: 20px; margin-bottom: 10px; border-top: 1px solid var(--border); padding-top: 14px;">
                         Items (<?= count($order['items']) ?>)
                     </h4>
@@ -188,4 +244,3 @@ $order = $code ? getOrderByCode($code) : null;
 </div>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
-
